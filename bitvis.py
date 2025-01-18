@@ -22,12 +22,16 @@ class BitConverterApp(QWidget):
         input_layout = QHBoxLayout()
         self.input_field = QLineEdit(self)
         self.input_field.setPlaceholderText("Enter a number")
-        self.input_field.setFont(QFont("Consolas", 18))  # Use VSCode-like font
+        self.input_field.setFont(QFont("Consolas", 18))  # Use Consolas font
         self.input_field.textChanged.connect(self.update_display)
+        self.input_field.returnPressed.connect(self.input_field.clearFocus)  # Clear focus on Enter
 
         self.format_selector = QComboBox(self)
-        self.format_selector.addItems(["Decimal", "Hexadecimal", "Binary"])
+        self.format_selector.setFixedWidth(100)
+        self.format_selector.addItems(["Dec", "Hex", "Bin"])
+        self.format_selector.setToolTip("Select input format (Dec, Hex, Bin)")
         self.format_selector.currentIndexChanged.connect(self.update_display)
+        self.format_selector.setFont(QFont("Consolas", 12))
 
         input_layout.addWidget(self.input_field)
         input_layout.addWidget(self.format_selector)
@@ -55,7 +59,8 @@ class BitConverterApp(QWidget):
                 background-color: palette(window);
                 border-radius: 25px; /* More rounded corners */
             }
-            QLineEdit, QTextEdit {
+            QLineEdit, QTextEdit, QComboBox, QLabel {
+                font-family: Consolas;
                 border: 1px solid palette(dark);
                 border-radius: 5px;
                 padding: 5px;
@@ -63,11 +68,11 @@ class BitConverterApp(QWidget):
             QPushButton {
                 margin: 2px;
                 font-size: 8px;
-                width: 15px;
-                height: 15px;
+                width: 20px;
+                height: 20px;
                 background-color: palette(button);
                 border: 1px solid palette(light);
-                border-radius: 3px;
+                border-radius: 10px; /* More rounded for circular appearance */
             }
             QPushButton:checked {
                 background-color: palette(highlight);
@@ -110,7 +115,11 @@ class BitConverterApp(QWidget):
         binary = bin(value)
 
         self.result_display.setText(
-            f"Dec: {decimal}\nHex: {hexadecimal}\nBin: {binary}"
+            f"Dec: {decimal}
+
+Hex: {hexadecimal}
+
+Bin: {binary}"
         )
 
     def display_bit_positions(self, value):
@@ -131,7 +140,7 @@ class BitConverterApp(QWidget):
             bit_layout.addWidget(label)
 
             row = 0 if i >= 16 else 1
-            col = (15 - i % 16) + (i % 4) // 4  # Adjust for spacing
+            col = (15 - i % 16) + (i % 4) // 4 + (i % 16 // 4) * 2  # Increase spacing between groups  # Adjust for spacing
             self.bit_layout.addLayout(bit_layout, row, col)
 
     def clear_bit_positions(self):
@@ -173,7 +182,20 @@ class BitConverterApp(QWidget):
             self.input_field.setFocus()
         super().mousePressEvent(event)
 
+    def setup_shortcuts(self):
+        self.format_selector.setShortcutEnabled(True)
+        self.format_selector.setItemData(0, "Alt+1", Qt.ItemDataRole.ToolTipRole)
+        self.format_selector.setItemData(1, "Alt+2", Qt.ItemDataRole.ToolTipRole)
+        self.format_selector.setItemData(2, "Alt+3", Qt.ItemDataRole.ToolTipRole)
+
     def keyPressEvent(self, event):
+        if event.modifiers() == Qt.KeyboardModifier.AltModifier:
+            if event.key() == Qt.Key.Key_1:
+                self.format_selector.setCurrentIndex(0)
+            elif event.key() == Qt.Key.Key_2:
+                self.format_selector.setCurrentIndex(1)
+            elif event.key() == Qt.Key.Key_3:
+                self.format_selector.setCurrentIndex(2)
         if event.key() == Qt.Key.Key_Escape:
             if self.input_field.text():
                 self.input_field.clear()
