@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import (
     QLineEdit, QGridLayout, QPushButton, QLabel, QTextEdit, QComboBox
 )
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QFont, QClipboard
 
 class BitConverterApp(QWidget):
     def __init__(self):
@@ -24,7 +24,7 @@ class BitConverterApp(QWidget):
         self.input_field.setPlaceholderText("Enter a number")
         self.input_field.setFont(QFont("Consolas", 18))  # Use Consolas font
         self.input_field.textChanged.connect(self.update_display)
-        self.input_field.returnPressed.connect(self.input_field.clearFocus)  # Clear focus on Enter
+        self.input_field.returnPressed.connect(self.handle_enter)  # Custom handler for Enter key
 
         self.format_selector = QComboBox(self)
         self.format_selector.setFixedWidth(100)
@@ -115,11 +115,7 @@ class BitConverterApp(QWidget):
         binary = bin(value)
 
         self.result_display.setText(
-            f"Dec: {decimal}
-
-Hex: {hexadecimal}
-
-Bin: {binary}"
+            f"Dec: {decimal}\nHex: {hexadecimal}\nBin: {binary}"
         )
 
     def display_bit_positions(self, value):
@@ -140,7 +136,8 @@ Bin: {binary}"
             bit_layout.addWidget(label)
 
             row = 0 if i >= 16 else 1
-            col = (15 - i % 16) + (i % 4) // 4 + (i % 16 // 4) * 2  # Increase spacing between groups  # Adjust for spacing
+            col = 15 - i % 16
+
             self.bit_layout.addLayout(bit_layout, row, col)
 
     def clear_bit_positions(self):
@@ -182,27 +179,34 @@ Bin: {binary}"
             self.input_field.setFocus()
         super().mousePressEvent(event)
 
-    def setup_shortcuts(self):
-        self.format_selector.setShortcutEnabled(True)
-        self.format_selector.setItemData(0, "Alt+1", Qt.ItemDataRole.ToolTipRole)
-        self.format_selector.setItemData(1, "Alt+2", Qt.ItemDataRole.ToolTipRole)
-        self.format_selector.setItemData(2, "Alt+3", Qt.ItemDataRole.ToolTipRole)
+    def handle_enter(self):
+        if not self.input_field.hasFocus():
+            self.input_field.setFocus()
+        else:
+            self.input_field.clearFocus()
 
     def keyPressEvent(self, event):
         if event.modifiers() == Qt.KeyboardModifier.AltModifier:
             if event.key() == Qt.Key.Key_1:
-                self.format_selector.setCurrentIndex(0)
+                self.format_selector.setCurrentIndex(0)  # Set "Dec" as selected
             elif event.key() == Qt.Key.Key_2:
-                self.format_selector.setCurrentIndex(1)
+                self.format_selector.setCurrentIndex(1)  # Set "Hex" as selected
             elif event.key() == Qt.Key.Key_3:
-                self.format_selector.setCurrentIndex(2)
-        if event.key() == Qt.Key.Key_Escape:
-            if self.input_field.text():
+                self.format_selector.setCurrentIndex(2)  # Set "Bin" as selected
+        elif event.modifiers() == Qt.KeyboardModifier.ControlModifier and event.key() == Qt.Key.Key_C:
+            clipboard = QApplication.clipboard()
+            clipboard.setText(self.input_field.text())
+        elif event.key() == Qt.Key.Key_Escape:
+            if self.input_field.hasFocus():
+                self.input_field.clearFocus()
+            elif self.input_field.text():
                 self.input_field.clear()
                 self.result_display.clear()
                 self.display_bit_positions(0)
             else:
                 QApplication.quit()
+        elif event.key() == Qt.Key.Key_Return:
+            self.handle_enter()
         else:
             super().keyPressEvent(event)
 
