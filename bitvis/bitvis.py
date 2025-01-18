@@ -216,6 +216,12 @@ class BitConverterApp(QWidget):
         else:
             super().keyPressEvent(event)
 
+def main():
+    app = QApplication(sys.argv)
+    window = BitConverterApp()
+    window.show()
+    sys.exit(app.exec())
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = BitConverterApp()
