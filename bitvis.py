@@ -9,7 +9,7 @@ from PyQt6.QtGui import QFont, QClipboard
 class BitConverterApp(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Bit Converter")
+        self.setWindowTitle("bitvis - Bit Converter")
         self.setGeometry(100, 100, 600, 400)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
@@ -22,7 +22,7 @@ class BitConverterApp(QWidget):
         input_layout = QHBoxLayout()
         self.input_field = QLineEdit(self)
         self.input_field.setPlaceholderText("Enter a number")
-        self.input_field.setFont(QFont("Consolas", 18))  # Use Consolas font
+        self.input_field.setFont(QFont("Consolas", 24))  # Use Consolas font
         self.input_field.textChanged.connect(self.update_display)
         self.input_field.returnPressed.connect(self.handle_enter)  # Custom handler for Enter key
 
@@ -68,11 +68,11 @@ class BitConverterApp(QWidget):
             QPushButton {
                 margin: 2px;
                 font-size: 8px;
-                width: 20px;
-                height: 20px;
+                width: 16px;
+                height: 16px;
                 background-color: palette(button);
                 border: 1px solid palette(light);
-                border-radius: 10px; /* More rounded for circular appearance */
+                border-radius: 8px; /* More rounded for circular appearance */
             }
             QPushButton:checked {
                 background-color: palette(highlight);
@@ -115,7 +115,7 @@ class BitConverterApp(QWidget):
         binary = bin(value)
 
         self.result_display.setText(
-            f"Dec: {decimal}\nHex: {hexadecimal}\nBin: {binary}"
+            f"Dec: {decimal:,}\n\nHex: {hexadecimal}\n\nBin: {binary}".replace(",", ".")
         )
 
     def display_bit_positions(self, value):
@@ -123,23 +123,29 @@ class BitConverterApp(QWidget):
         for i in range(31, -1, -1):
             bit_set = (value & (1 << i)) != 0
 
-            bit_layout = QVBoxLayout()
+            #
+            row = 0 if i >= 16 else 1
+            col_bit = i % 16
+            col_space = col_bit // 4
+            col = 15 - col_bit
+            # 
+            bit_layout2 = QVBoxLayout()
             button = QPushButton(self)
             button.setCheckable(True)
             button.setChecked(bit_set)
             button.clicked.connect(lambda _, pos=i: self.toggle_bit(pos))
+            button.setFixedWidth(22)
             label = QLabel(str(i), self)
-            label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            label.setAlignment(Qt.AlignmentFlag.AlignLeft)
             label.setFont(QFont("Consolas", 8))
-
-            bit_layout.addWidget(button)
-            bit_layout.addWidget(label)
-
-            row = 0 if i >= 16 else 1
-            col = 15 - i % 16
-
-            self.bit_layout.addLayout(bit_layout, row, col)
-
+            if (col_bit % 4 == 0) and (col_bit != 0):
+                label.setMinimumWidth(50)
+            else:
+                label.setMinimumWidth(30)
+            bit_layout2.addWidget(button)
+            bit_layout2.addWidget(label)
+            self.bit_layout.addLayout(bit_layout2, row, col)
+            
     def clear_bit_positions(self):
         for i in reversed(range(self.bit_layout.count())):
             layout_item = self.bit_layout.itemAt(i)
