@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="bitvis",
-    version="0.1.0",
+    version="0.1.1",
     author="che-41",
     author_email="",
     description="A PyQt6-based bit converter application",
@@ -11,6 +11,9 @@ setup(
     url="https://github.com/che-41/bitvis",
     packages=find_packages(),
     include_package_data=True,
+    package_data={
+        "bitvis": ["resources/bitvis.ico"],  # Relativer Pfad im Paket
+    },
     install_requires=[
         "PyQt6>=6.0.0",
     ],

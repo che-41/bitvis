@@ -1,19 +1,26 @@
+import os
 import sys
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout,
     QLineEdit, QGridLayout, QPushButton, QLabel, QTextEdit, QComboBox
 )
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont, QClipboard
+from PyQt6.QtCore import Qt, QPoint
+from PyQt6.QtGui import QFont, QClipboard, QIcon, QCursor
 
 class BitConverterApp(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("bitvis - Bit Converter")
+        icon_path = os.path.join(os.path.dirname(__file__), "resources", "bitvis.ico")
+        self.setWindowIcon(QIcon(icon_path))
         self.setGeometry(100, 100, 600, 400)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.center_window()
+
+        # Variables for dragging
+        self.drag_active = False
+        self.drag_position = QPoint()
 
         # Main layout
         layout = QVBoxLayout()
@@ -181,9 +188,25 @@ class BitConverterApp(QWidget):
             pass
 
     def mousePressEvent(self, event):
-        if not self.bit_display.geometry().contains(event.pos()):
-            self.input_field.setFocus()
-        super().mousePressEvent(event)
+        if event.button() == Qt.MouseButton.LeftButton and self.input_field.geometry().contains(self.mapFromGlobal(event.globalPosition().toPoint())):
+            self.drag_active = True
+            self.drag_position = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            self.setCursor(QCursor(Qt.CursorShape.SizeAllCursor))
+            event.accept()
+        else:
+            super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if self.drag_active and event.buttons() == Qt.MouseButton.LeftButton:
+            self.move(event.globalPosition().toPoint() - self.drag_position)
+            event.accept()
+        else:
+            super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        self.drag_active = False
+        self.setCursor(QCursor(Qt.CursorShape.ArrowCursor))
+        event.accept()
 
     def handle_enter(self):
         if not self.input_field.hasFocus():
